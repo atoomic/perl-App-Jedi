@@ -46,6 +46,7 @@ around 'options_usage' => sub {
     say "The available actions are : ";
     say "";
     say "    * Check";
+    say "    * Launch";
     say "";
 	exit(0);
 };
