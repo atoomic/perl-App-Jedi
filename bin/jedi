@@ -1,0 +1,12 @@
+#!/usr/bin/env perl
+
+# ABSTRACT: Jedi App Manager
+# PODNAME: jedi
+
+use strict;
+use warnings;
+# VERSION
+
+use App::Jedi;
+
+App::Jedi->run;
