@@ -4,18 +4,24 @@ package App::Jedi;
 
 =HEAD1 DESCRIPTION
 
+Jedi App is a manager to install and deploy your jedi applications.
+
 =cut
 
 use strict;
 use warnings;
 # VERSION
 use Moo;
-use MooX::Options flavour => [qw( pass_through )], with_config_from_file => 1;
-use Getopt::Long::Descriptive;
+use MooX::Options with_config_from_file => 1;
 use feature 'say';
 use Path::Class;
 use Module::Runtime qw/use_module/;
 
+=attr bundler_root_dir
+
+The root dir where to install and deploy your app
+
+=cut
 option 'bundler_root_dir' => (
 	'is' => 'ro',
 	'format' => 's',
@@ -37,38 +43,43 @@ around 'options_usage' => sub {
     $usage->{leader_text} .= ' ACTIONS [ Actions Options ]';
 
     say $usage;
-    say "The available actions is : ";
+    say "The available actions are : ";
     say "";
     say "    * Check";
     say "";
 	exit(0);
 };
 
+=method run
+
+This is a class method to start your app
+
+It will dispatch the command line between the manager and the action
+
+=cut
+
 sub run {
 
-	my @ARGV_FOR_BUNDLER;
-	my @ARGV_FOR_ACTION;
+	my @argv_for_app_manager;
 	my $action;
 	while(@ARGV){
 		if (index($ARGV[0], '-') == 0) {
-			push @ARGV_FOR_BUNDLER, shift @ARGV;
+			push @argv_for_app_manager, shift @ARGV;
 		}
 		else {
 			$action = shift @ARGV;
-			@ARGV_FOR_ACTION = @ARGV;
 			last;
 		}
 	}
 
-	@ARGV_FOR_BUNDLER = '-h' if !defined $action;
+	@argv_for_app_manager = '-h' if !defined $action;
 
 	my $bundler = do {
-		local @ARGV = @ARGV_FOR_BUNDLER;
+		local @ARGV = @argv_for_app_manager;
 		shift->new_with_options;
 	};
 
 	{
-		local @ARGV = @ARGV_FOR_ACTION;
 		my $class;
 		if (eval{$class = use_module('App::Jedi::Actions::' . $action); 1}) {
 			Getopt::Long::Descriptive::prog_name(Getopt::Long::Descriptive::prog_name . ' ' . $action);
