@@ -17,21 +17,34 @@ use feature 'say';
 use Path::Class;
 use Module::Runtime qw/use_module/;
 
-=attr bundler_root_dir
+=attr root_dir
 
 The root dir where to install and deploy your app
 
 =cut
-option 'bundler_root_dir' => (
+option 'root_dir' => (
 	'is' => 'ro',
 	'format' => 's',
-	'doc' => 'root dir where bundler install the deps of your apps',
+	'doc' => 'root dir where to install your apps',
 	'default' => sub {'~/.jedi_bundler'},
 	'coerce' => sub {
 		$_[0] =~ s/\~/$ENV{'HOME'}/gx;
 		dir($_[0]);
 	},
 );
+
+=attr install_dir
+
+Installation of the lib
+
+=cut
+has 'install_dir' => (
+	'is' => 'lazy',
+);
+sub _build_install_dir {
+	my ($self) = @_;
+	return dir($self->root_dir, 'perls', $^V);
+}
 
 around 'options_usage' => sub {
 	my $orig = shift;
@@ -75,23 +88,24 @@ sub run {
 
 	@argv_for_app_manager = '-h' if !defined $action;
 
-	my $bundler = do {
+	my $jedi_manager = do {
 		local @ARGV = @argv_for_app_manager;
 		shift->new_with_options;
 	};
 
-	my $perl_bundler_lib = dir($bundler->bundler_root_dir, 'lib', 'perl5')->stringify;
-	eval qq{use lib '$perl_bundler_lib'};
+	my $perl_lib = dir($jedi_manager->install_dir, 'lib', 'perl5')->stringify;
+	eval qq{use lib '$perl_lib'};
 
 	{
 		my $class;
 		if (eval{$class = use_module('App::Jedi::Actions::' . $action); 1}) {
 			Getopt::Long::Descriptive::prog_name(Getopt::Long::Descriptive::prog_name . ' ' . $action);
-			$class->new_with_options->run($bundler);
+			$class->new_with_options->run($jedi_manager);
 		} else {
 			say "The action : \"$action\" is not available !";
 			say "";
-			$bundler->options_usage();
+			say "Error: ", $@;
+			$jedi_manager->options_usage();
 		} 
 	}
 

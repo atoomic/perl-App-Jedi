@@ -6,13 +6,15 @@ use Moo;
 # VERSION
 use MooX::Options;
 use feature 'say';
+use App::Jedi::Actions::Check;
 use Module::Runtime qw/use_module/;
 
 option 'name' => (is => 'ro', required => 1, doc => 'name of the app to launch', format => 's');
 
 sub run {
-	my ($self, $bundler) = @_;
+	my ($self, $jedi_manager) = @_;
 
+	App::Jedi::Actions::Check->new->run($jedi_manager);
 
 	my $jedi = use_module('Jedi')->new;
 	$jedi->road('/', 'Jedi::App::' . $self->name);

@@ -12,30 +12,16 @@ use Path::Class;
 use Carp;
 
 sub run {
-	my ($self, $bundler) = @_;
+	my ($self, $jedi_manager) = @_;
 
-	say "Bundle Dir : ", $bundler->bundler_root_dir;
-	$bundler->bundler_root_dir->mkpath;
-	dir($bundler->bundler_root_dir, 'bin')->mkpath;
+	say "Root Dir : ", $jedi_manager->root_dir;
+	say "Install Dir : ", $jedi_manager->install_dir;
 
-	my $perl_check = $bundler->bundler_root_dir->file('PERL_VERSION');
-	if (!-e $perl_check) {
-		$perl_check->spew($^V);
-	} else {
-		my $perl_version = $perl_check->slurp;
-		if ($perl_version ne $^V) {
-			croak 
-			join("\n",
-			  "The current perl version is different than the one use for installation."
-			, "Current : " . $^V
-			, "Install : " . $perl_version
-			, ""
-			, "We have XS installed here, you need to remove and reinstall the bundle dir."
-			);
-		}
-	}
+	$jedi_manager->root_dir->mkpath;
+	$jedi_manager->install_dir->mkpath;
+	dir($jedi_manager->root_dir, 'bin')->mkpath;
 
-	my $cpanm = $bundler->bundler_root_dir->file('bin','cpanm');
+	my $cpanm = $jedi_manager->root_dir->file('bin','cpanm');
 	if (!-f $cpanm) {
 		say "Fetching cpanm ...";
 		my $cpanm_source = get('http://cpanmin.us');
@@ -48,13 +34,13 @@ sub run {
 
 	say "Installing Jedi requirements ...";
 	system(
-		$^X, $cpanm->stringify, 
-		"--mirror-only", 
-		"--mirror", "http://cpan.celogeek.fr", 
-		"--mirror", "http://cpan.org", 
-		"-l", $bundler->bundler_root_dir, 
-		"-L", $bundler->bundler_root_dir, 
-		"-nq", 
+		$^X, $cpanm->stringify,
+		"--mirror-only",
+		"--mirror", "http://cpan.celogeek.fr",
+		"--mirror", "http://cpan.org",
+		"-l", $jedi_manager->install_dir,
+		"-L", $jedi_manager->install_dir,
+		"-nq",
 		"Jedi");
 
 	return;
