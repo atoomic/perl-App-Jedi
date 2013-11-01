@@ -80,6 +80,9 @@ sub run {
 		shift->new_with_options;
 	};
 
+	my $perl_bundler_lib = dir($bundler->bundler_root_dir, 'lib', 'perl5')->stringify;
+	eval qq{use lib '$perl_bundler_lib'};
+
 	{
 		my $class;
 		if (eval{$class = use_module('App::Jedi::Actions::' . $action); 1}) {
