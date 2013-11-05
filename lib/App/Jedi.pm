@@ -17,6 +17,17 @@ use feature 'say';
 use Path::Class;
 use Module::Runtime qw/use_module/;
 
+=attr default_root_dir
+
+This is the default root dir
+
+=cut
+
+has default_root_dir => (
+	is => 'ro',
+	default => sub {'~/.jedi_bundler'}
+);
+
 =attr root_dir
 
 The root dir where to install and deploy your app
@@ -26,10 +37,10 @@ option 'root_dir' => (
 	'is' => 'ro',
 	'format' => 's',
 	'doc' => 'root dir where to install your apps',
-	'default' => sub {'~/.jedi_bundler'},
+	'default' => sub {shift->default_root_dir},
 	'coerce' => sub {
 		$_[0] =~ s/\~/$ENV{'HOME'}/gx;
-		dir($_[0]);
+		dir($_[0])->resolve;
 	},
 );
 
@@ -73,6 +84,7 @@ It will dispatch the command line between the manager and the action
 =cut
 
 sub run {
+	my ($class, $default_root_dir) = @_;
 
 	my @argv_for_app_manager;
 	my $action;
@@ -90,7 +102,7 @@ sub run {
 
 	my $jedi_manager = do {
 		local @ARGV = @argv_for_app_manager;
-		shift->new_with_options;
+		shift->new_with_options(default_root_dir => $default_root_dir);
 	};
 
 	my $perl_lib = dir($jedi_manager->install_dir, 'lib', 'perl5')->stringify;

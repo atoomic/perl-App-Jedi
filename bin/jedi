@@ -6,7 +6,13 @@
 use strict;
 use warnings;
 # VERSION
+use feature 'say';
 
-use App::Jedi;
+use FindBin qw/$Bin/;
+use File::Spec;
 
-App::Jedi->run;
+my $default_root_dir = File::Spec->catfile($Bin, '..');
+eval qq{use lib '$default_root_dir/lib/perl5'};
+
+require App::Jedi;
+App::Jedi->run($default_root_dir);
